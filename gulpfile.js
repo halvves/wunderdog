@@ -101,7 +101,9 @@ gulp.task('cleanposts', function () {
 
 gulp.task('posts', ['cleanposts'], function () {
     // Copy blog images over.
-    var images = gulp.src(['content/posts/*.jpg', 'content/posts/*.png'])
+    var images = gulp.src(['content/posts/*.jpg',
+                           'content/posts/*.png',
+                           'content/posts/*.svg'])
         .pipe(gulp.dest('dist/images/posts'))
 
     var posts = gulp.src('content/posts/*.md')
@@ -158,9 +160,11 @@ gulp.task('testimonials', function () {
         .pipe((function () {
             var testimonials = []
             return through.obj(function (file, enc, cb) {
-                testimonials.push(file.page)
-                testimonials[testimonials.length - 1].content = file.contents.toString()
-                this.push(file)
+                if (file.page.published) {
+                    testimonials.push(file.page)
+                    testimonials[testimonials.length - 1].content = file.contents.toString()
+                    this.push(file)
+                }
                 cb()
             },
             function (cb) {
@@ -197,7 +201,7 @@ gulp.task('services', function () {
         .pipe((function () {
             var services = []
             return through.obj(function (file, enc, cb) {
-                if (file.page.published){
+                if (file.page.published) {
                     services.push(file.page)
                     services[services.length - 1].content = file.contents.toString()
                     this.push(file)
@@ -296,6 +300,13 @@ gulp.task('fonts', function () {
 })
 
 
+gulp.task('extra', function () {
+    return gulp.src('assets/extra/**')
+        .pipe(gulp.dest('dist'))
+        .pipe(connect.reload())
+})
+
+
 gulp.task('cleanstyles', function () {
     return gulp.src(['dist/styles'], {read: false})
         .pipe(rimraf())
@@ -367,7 +378,7 @@ gulp.task('rss', ['posts'], function () {
 
 
 gulp.task('content', ['posts', 'pages', 'rss'])
-gulp.task('default', ['content', 'images', 'fonts', 'styles', 'rss'])
+gulp.task('default', ['content', 'images', 'fonts', 'styles', 'rss', 'extra'])
 
 
 gulp.task('clean', function() {
@@ -381,6 +392,7 @@ gulp.task('watch', ['default'], function () {
     gulp.watch(['assets/styles/**'], ['styles'])
     gulp.watch(['assets/images/**'], ['images'])
     gulp.watch(['assets/fonts/**'], ['fonts'])
+    gulp.watch(['assets/extra/**'], ['extra'])
 
     gulp.watch(['content/pages/**', 'content/testimonials/**', 'content/services/**'], ['pages'])
     gulp.watch(['content/posts/**'], ['posts', 'rss'])
